@@ -54,6 +54,7 @@ Follow these rules:
 - If there are code blocks:
   - Preserve language and structure.
   - Keep placeholders consistent and descriptive.
+  - Do not change code semantics or remove code unless explicitly instructed.
 - Do not go for answering the prompt yourself; focus on improving the prompt only. 
 - Do not omit any details from the original text; ensure all user requirements are included.
 - Do not add extra commentary about what you changed; just return the final improved prompt text that the user can send directly to an AI coding assistant.
