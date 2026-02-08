@@ -1,10 +1,11 @@
 import Foundation
 
 class APIClient {
-    private let apiURL = URL(string: "http://localhost:7172/api/enhance")!
+    private let enhancePromptURL = URL(string: "http://localhost:7172/api/enhance")!
+    private let enhanceGrammarURL = URL(string: "http://localhost:7172/api/grammar")!
     
-    func enhance(_ text: String, completion: @escaping (Result<String, Error>) -> Void) {
-        var request = URLRequest(url: apiURL)
+    func enhance(_ text: String, cmd: String, completion: @escaping (Result<String, Error>) -> Void) {
+        var request = URLRequest(url: cmd == "E" ? enhancePromptURL : enhanceGrammarURL)
         request.httpMethod = "POST"
         request.setValue("application/json", forHTTPHeaderField: "Content-Type")
         

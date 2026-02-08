@@ -15,6 +15,9 @@ final class KeyboardMonitor {
     private let hotKeySignature: OSType = OSType(UInt32(bigEndian: 0x4845524B))
     private let hotKeyID: UInt32 = 1
 
+    private let grammarFixHotKeySignature: OSType = OSType(UInt32(bigEndian: 0x47525846)) // "GRXF"
+    private let grammarFixHotKeyID: UInt32 = 2
+
     private init() {}
 
     // Call this once at app startup (e.g. AppDelegate applicationDidFinishLaunching)
@@ -22,9 +25,9 @@ final class KeyboardMonitor {
         requestAccessibilityPermissions()
 
         installHotKeyHandler()
-        registerHotKey()
+        registerHotKeys()
 
-        print("🎧 Keyboard monitoring started (Carbon global hotkey Cmd+E).")
+        print("🎧 Keyboard monitoring started (Carbon global hotkey Cmd+E and Cmd+G).")
     }
 
     func stopMonitoring() {
@@ -74,6 +77,15 @@ final class KeyboardMonitor {
                     return noErr
                 }
 
+                if hotKeyID.signature == KeyboardMonitor.shared.grammarFixHotKeySignature &&
+                    hotKeyID.id == KeyboardMonitor.shared.grammarFixHotKeyID {
+
+                    DispatchQueue.main.async {
+                        KeyboardMonitor.shared.handleCommandG()
+                    }
+                    return noErr
+                }
+
                 return OSStatus(eventNotHandledErr)
             },
             1,
@@ -89,18 +101,18 @@ final class KeyboardMonitor {
         }
     }
 
-    private func registerHotKey() {
+    private func registerHotKeys() {
         // Cmd modifier
         let modifiers: UInt32 = UInt32(cmdKey)
 
         // Carbon virtual keycode for "E" is 14 on US keyboard layouts
-        let keyCode: UInt32 = 14
+        let enhancerKeyCode: UInt32 = 14
 
         var hkRef: EventHotKeyRef?
         let hkID = EventHotKeyID(signature: hotKeySignature, id: hotKeyID)
 
-        let status = RegisterEventHotKey(
-            keyCode,
+        let enhancePromptKeyStatus = RegisterEventHotKey(
+            enhancerKeyCode,
             modifiers,
             hkID,
             GetApplicationEventTarget(),
@@ -108,18 +120,39 @@ final class KeyboardMonitor {
             &hkRef
         )
 
-        if status == noErr {
+        if enhancePromptKeyStatus == noErr {
             hotKeyRef = hkRef
             print("✅ Cmd+E hotkey registered")
         } else {
-            print("❌ Failed to register Cmd+E hotkey: \(status)")
+            print("❌ Failed to register Cmd+E hotkey: \(enhancePromptKeyStatus)")
+        }
+
+         // Carbon virtual keycode for "G" is 5 on US keyboard layouts
+        // will be used to fix grammar only.
+        let grammarFixKeyCode: UInt32 = 5
+
+        var grammarFixHKRef: EventHotKeyRef?
+        let grammarFixHkID = EventHotKeyID(signature: grammarFixHotKeySignature, id: grammarFixHotKeyID)
+
+        let grammarFixKeyStatus = RegisterEventHotKey(
+            grammarFixKeyCode,
+            modifiers,
+            grammarFixHkID,
+            GetApplicationEventTarget(),
+            0,
+            &grammarFixHKRef
+        )
+
+        if grammarFixKeyStatus == noErr {
+            hotKeyRef = grammarFixHKRef
+            print("✅ Cmd+G hotkey registered for grammar fix")
+        } else {
+            print("❌ Failed to register Cmd+G hotkey: \(grammarFixKeyStatus)")
         }
     }
 
-    // MARK: - Hotkey Action
-
-    private func handleCommandE() {
-        // Make sure our app can show UI
+    private func execute(cmd: String) {
+         // Make sure our app can show UI
         NSApp.activate(ignoringOtherApps: true)
 
         // First try Accessibility API to read globally selected text
@@ -127,7 +160,7 @@ final class KeyboardMonitor {
             let trimmed = rawText.trimmingCharacters(in: .whitespacesAndNewlines)
             if !trimmed.isEmpty {
                 print("[PromptEnhancer] AX captured text (length: \(trimmed.count)):\n\(trimmed)")
-                proceedWithSelectedText(trimmed)
+                proceedWithSelectedText(trimmed, cmd: cmd)
                 return
             } else {
                 print("[PromptEnhancer] AX selected text is empty; falling back to clipboard.")
@@ -137,22 +170,39 @@ final class KeyboardMonitor {
         }
 
         // Fallback: use Cmd+C + pasteboard change detection
-        copySelectedTextUsingPasteboardFallback()
+        copySelectedTextUsingPasteboardFallback(cmd: cmd)
+    }
+
+    private func handleCommandG() {
+        execute(cmd: "G")
+    }
+
+    // MARK: - Hotkey Action
+
+    private func handleCommandE() {
+        execute(cmd: "E")
     }
 
     /// Common flow once we have a non-empty selected text.
-    private func proceedWithSelectedText(_ text: String) {
+    private func proceedWithSelectedText(_ text: String, cmd: String) {
+        if cmd == "E" {
         showAlert(
             title: "Enhancing Prompt",
             message: "Enhancing your selected text..."
         )
+        } else if cmd == "G" {
+            showAlert(
+                title: "Fixing Grammar",
+                message: "Fixing grammar of your selected text..."
+            )
+        }
 
-        sendToAPI(text: text)
+        sendToAPI(text: text, cmd: cmd)
     }
 
     /// Fallback approach: simulate Cmd+C in the frontmost app and read
     /// the updated pasteboard contents only if the changeCount changed.
-    private func copySelectedTextUsingPasteboardFallback() {
+    private func copySelectedTextUsingPasteboardFallback(cmd: String) {
         let pasteboard = NSPasteboard.general
         let initialChangeCount = pasteboard.changeCount
 
@@ -173,7 +223,7 @@ final class KeyboardMonitor {
                     title: "No Text Selected",
                     message: "There is no text selected. Please select some text and try again."
                 )
-                print("[PromptEnhancer] Cmd+E pressed but pasteboard did not change (no copy).")
+                print("[PromptEnhancer] Cmd+\(cmd) pressed but pasteboard did not change (no copy).")
                 return
             }
 
@@ -184,12 +234,12 @@ final class KeyboardMonitor {
                     title: "No Text Selected",
                     message: "There is no text selected. Please select some text and try again."
                 )
-                print("[PromptEnhancer] Cmd+E pressed but copied text is empty.")
+                print("[PromptEnhancer] Cmd+\(cmd) pressed but copied text is empty.")
                 return
             }
 
             print("[PromptEnhancer] Clipboard captured text (length: \(trimmed.count)):\n\(trimmed)")
-            self.proceedWithSelectedText(trimmed)
+            self.proceedWithSelectedText(trimmed, cmd: cmd)
         }
     }
 
@@ -227,11 +277,11 @@ final class KeyboardMonitor {
         return selectedText
     }
 
-    private func sendToAPI(text: String) {
+    private func sendToAPI(text: String, cmd: String) {
         let original = normalizeOriginalText(text)
         print("[PromptEnhancer] Normalized text to send (length: \(original.count)).")
 
-        apiClient.enhance(original) { [weak self] result in
+        apiClient.enhance(original, cmd: cmd) { [weak self] result in
             DispatchQueue.main.async {
                 guard let self else { return }
 

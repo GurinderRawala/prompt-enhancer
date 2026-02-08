@@ -21,7 +21,9 @@ class AppDelegate: NSObject, NSApplicationDelegate {
         
         // Create menu
         let menu = NSMenu()
-        menu.addItem(NSMenuItem(title: "Listening (Cmd+E)...", action: nil, keyEquivalent: ""))
+        menu.addItem(NSMenuItem(title: "Fix Prompt (Cmd+E)...", action: nil, keyEquivalent: "e"))
+        menu.addItem(NSMenuItem.separator())
+        menu.addItem(NSMenuItem(title: "Fix Grammar (Cmd+G)...", action: nil, keyEquivalent: "g"))
         menu.addItem(NSMenuItem.separator())
         menu.addItem(NSMenuItem(title: "Quit", action: #selector(quit), keyEquivalent: "q"))
         
