@@ -3,9 +3,27 @@ import Foundation
 class APIClient {
     private let enhancePromptURL = URL(string: "http://localhost:7172/api/enhance")!
     private let enhanceGrammarURL = URL(string: "http://localhost:7172/api/grammar")!
+    private let customTaskURL = URL(string: "http://localhost:7172/api/custom-task")!
+
+    func getURL(for cmd: String) -> URL? {
+        switch cmd {
+        case "E":
+            return enhancePromptURL
+        case "G":
+            return enhanceGrammarURL
+        case "T":
+            return customTaskURL
+        default:
+            return nil
+        }
+    }
     
     func enhance(_ text: String, cmd: String, completion: @escaping (Result<String, Error>) -> Void) {
-        var request = URLRequest(url: cmd == "E" ? enhancePromptURL : enhanceGrammarURL)
+        guard let url = getURL(for: cmd) else {
+            completion(.failure(NSError(domain: "APIClient", code: -1, userInfo: [NSLocalizedDescriptionKey: "Unknown command"])))
+            return
+        }
+        var request = URLRequest(url: url)
         request.httpMethod = "POST"
         request.setValue("application/json", forHTTPHeaderField: "Content-Type")
         

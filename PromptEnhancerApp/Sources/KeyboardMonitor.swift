@@ -18,6 +18,9 @@ final class KeyboardMonitor {
     private let grammarFixHotKeySignature: OSType = OSType(UInt32(bigEndian: 0x47525846)) // "GRXF"
     private let grammarFixHotKeyID: UInt32 = 2
 
+    private let customTaskHotKeySignature: OSType = OSType(UInt32(bigEndian: 0x4354534B)) // "CTSK"
+    private let customTaskHotKeyID: UInt32 = 3
+
     private init() {}
 
     // Call this once at app startup (e.g. AppDelegate applicationDidFinishLaunching)
@@ -27,7 +30,7 @@ final class KeyboardMonitor {
         installHotKeyHandler()
         registerHotKeys()
 
-        print("🎧 Keyboard monitoring started (Carbon global hotkey Cmd+E and Cmd+G).")
+        print("🎧 Keyboard monitoring started (Carbon global hotkey Cmd+E, Cmd+G, and Cmd+T).")
     }
 
     func stopMonitoring() {
@@ -82,6 +85,15 @@ final class KeyboardMonitor {
 
                     DispatchQueue.main.async {
                         KeyboardMonitor.shared.handleCommandG()
+                    }
+                    return noErr
+                }
+
+                if hotKeyID.signature == KeyboardMonitor.shared.customTaskHotKeySignature &&
+                    hotKeyID.id == KeyboardMonitor.shared.customTaskHotKeyID {
+
+                    DispatchQueue.main.async {
+                        KeyboardMonitor.shared.handleCommandT()
                     }
                     return noErr
                 }
@@ -149,6 +161,28 @@ final class KeyboardMonitor {
         } else {
             print("❌ Failed to register Cmd+G hotkey: \(grammarFixKeyStatus)")
         }
+        // Carbon virtual keycode for "T" is 17 on US keyboard layouts
+        // will be used for the custom task.
+        let customTaskKeyCode: UInt32 = 17
+
+        var customTaskHKRef: EventHotKeyRef?
+        let customTaskHkID = EventHotKeyID(signature: customTaskHotKeySignature, id: customTaskHotKeyID)
+
+        let customTaskKeyStatus = RegisterEventHotKey(
+            customTaskKeyCode,
+            modifiers,
+            customTaskHkID,
+            GetApplicationEventTarget(),
+            0,
+            &customTaskHKRef
+        )
+
+        if customTaskKeyStatus == noErr {
+            hotKeyRef = customTaskHKRef
+            print("✅ Cmd+T hotkey registered for custom task")
+        } else {
+            print("❌ Failed to register Cmd+T hotkey: \(customTaskKeyStatus)")
+        }
     }
 
     private func execute(cmd: String) {
@@ -183,6 +217,10 @@ final class KeyboardMonitor {
         execute(cmd: "E")
     }
 
+    private func handleCommandT() {
+        execute(cmd: "T")
+    }
+
     /// Common flow once we have a non-empty selected text.
     private func proceedWithSelectedText(_ text: String, cmd: String) {
         if cmd == "E" {
@@ -194,6 +232,11 @@ final class KeyboardMonitor {
             showAlert(
                 title: "Fixing Grammar",
                 message: "Fixing grammar of your selected text..."
+            )
+        } else if cmd == "T" {
+            showAlert(
+                title: "Performing Custom Task",
+                message: "Processing your selected text..."
             )
         }
 

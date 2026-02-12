@@ -3,6 +3,8 @@ import cors from 'cors';
 import dotenv from 'dotenv';
 import OpenAI from 'openai';
 import winston from 'winston';
+import { EnhanceCommand } from './types';
+import { readTaskPrompt } from './read-task-prompt';
 
 dotenv.config();
 
@@ -125,7 +127,13 @@ Do not include any other commentary, explanations, or XML outside of <improved_t
 </output_format>
 `;
 
-async function enhanceText(text: string, cmd: 'grammar' | 'enhance'): Promise<string> {
+const prompts: Record<EnhanceCommand, string> = {
+  enhance: enhancePromptSystemInstruction,
+  grammar: grammarPromptSystemInstruction,
+  task: readTaskPrompt(logger),
+};
+
+async function enhanceText(text: string, cmd: EnhanceCommand): Promise<string> {
   const trimmed = text.trim();
 
   if (!process.env.OPENAI_API_KEY) {
@@ -134,11 +142,15 @@ async function enhanceText(text: string, cmd: 'grammar' | 'enhance'): Promise<st
   }
 
   try {
-    const systemPrompt =
-      cmd === 'enhance' ? enhancePromptSystemInstruction : grammarPromptSystemInstruction;
+    const systemPrompt = prompts[cmd];
+
+    if (!systemPrompt) {
+      logger.error(`No system prompt found for command: ${cmd}`);
+      return trimmed;
+    }
 
     const completion = await openai.chat.completions.create({
-      model: 'gpt-4.1-mini',
+      model: cmd === 'task' ? 'gpt-5.1' : 'gpt-4.1-mini',
       messages: [
         { role: 'system', content: systemPrompt },
         { role: 'user', content: trimmed },
@@ -160,7 +172,7 @@ async function enhanceText(text: string, cmd: 'grammar' | 'enhance'): Promise<st
   }
 }
 
-async function handleEnhance(cmd: 'grammar' | 'enhance', req: Request, res: Response) {
+async function handleEnhance(cmd: EnhanceCommand, req: Request, res: Response) {
   const body = req.body as EnhanceRequestBody;
   logger.info(`Received enhance request: ${JSON.stringify(body)}`);
 
@@ -181,6 +193,8 @@ app.post('/api/enhance', handleEnhance.bind(null, 'enhance'));
 app.post('/api/enhancer', handleEnhance.bind(null, 'enhance'));
 
 app.post('/api/grammar', handleEnhance.bind(null, 'grammar'));
+
+app.post('/api/custom-task', handleEnhance.bind(null, 'task'));
 
 app.get('/health', (_req, res) => {
   res.json({ status: 'ok' });
