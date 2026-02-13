@@ -165,6 +165,11 @@ async function enhanceText(text: string, cmd: EnhanceCommand): Promise<string> {
       return trimmed;
     }
 
+    logger.info(`LLM response received for command "${cmd}", length: ${enhanced.length}`, {
+      response: enhanced,
+      completion,
+    });
+
     return parseImprovedTextResponse(enhanced);
   } catch (err) {
     logger.error(`Error calling OpenAI: ${err instanceof Error ? err.message : String(err)}`);
@@ -174,7 +179,9 @@ async function enhanceText(text: string, cmd: EnhanceCommand): Promise<string> {
 
 async function handleEnhance(cmd: EnhanceCommand, req: Request, res: Response) {
   const body = req.body as EnhanceRequestBody;
-  logger.info(`Received enhance request: ${JSON.stringify(body)}`);
+  logger.info(
+    `Received request for command "${cmd}" with text length: ${body.text ? body.text.length : 0}`,
+  );
 
   if (!body || typeof body.text !== 'string' || body.text.trim() === '') {
     logger.warn('Enhance request missing or empty "text" field.');
