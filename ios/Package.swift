@@ -2,16 +2,16 @@
 import PackageDescription
 
 let package = Package(
-    name: "PromptEnhancerApp",
+    name: "OmniKeyAI",
     platforms: [
         .macOS(.v13)
     ],
     products: [
-        .executable(name: "PromptEnhancerApp", targets: ["PromptEnhancerApp"])
+        .executable(name: "OmniKeyAI", targets: ["OmniKeyAI"])
     ],
     targets: [
         .executableTarget(
-            name: "PromptEnhancerApp",
+            name: "OmniKeyAI",
             dependencies: [],
             path: "Sources",
             linkerSettings: [
