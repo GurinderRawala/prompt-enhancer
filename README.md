@@ -69,10 +69,10 @@ All backend files live in the repository root (for example `package.json`, `src/
 
 ## macOS App Setup
 
-The macOS app code is under `PromptEnhancerApp/`.
+The macOS app code is under `macOS/`.
 
-1. Open `PromptEnhancerApp/Package.swift` in Xcode.
-2. Select the `PromptEnhancerApp` scheme and your Mac as destination.
+1. Open `OmniKey-AI/macOS` in Xcode.
+2. Run app in Xcode select my mac as destination.
 3. Run the app; you should see the **OK** icon in the menu bar.
 4. When prompted, grant **Accessibility** and (if requested) **Input Monitoring** permissions so the app can listen for shortcuts and perform copy/paste.
 
