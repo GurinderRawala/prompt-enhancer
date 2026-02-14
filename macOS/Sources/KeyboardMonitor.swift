@@ -340,18 +340,9 @@ final class KeyboardMonitor {
         }
     }
 
-    /// Strip any number of leading "✨ Enhanced: " prefixes so we always
     /// send the underlying original text to the backend.
     private func normalizeOriginalText(_ text: String) -> String {
-        var result = text.trimmingCharacters(in: .whitespacesAndNewlines)
-        let prefix = "✨ Enhanced: "
-
-        while result.hasPrefix(prefix) {
-            result.removeFirst(prefix.count)
-            result = result.trimmingCharacters(in: .whitespacesAndNewlines)
-        }
-
-        return result
+        return text.trimmingCharacters(in: .whitespacesAndNewlines)
     }
 
     private func replaceSelectedText(with text: String) {
