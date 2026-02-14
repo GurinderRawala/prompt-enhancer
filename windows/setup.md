@@ -1,7 +1,7 @@
 # Setup on Windows
 
 ## Step 1
-To download and run the app on windows. Open powershell terminal and run this command: 
+To download and run the app on Windows, open the PowerShell terminal and copy-paste this command:
 
 ```powershell
 # OmniKey-AI Windows bootstrap script (HTTPS-only, fixed .env location)
@@ -103,7 +103,7 @@ try {
 
 ## Step 2
 
-Restart the powershell and these commands. One by one. 
+Restart PowerShell and run these commands one by one.
 
 ```powershell 
 cd OmniKey-AI
