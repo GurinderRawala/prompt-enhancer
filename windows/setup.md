@@ -111,3 +111,4 @@ $env:DOTNET_ROOT="$HOME\scoop\apps\dotnet-sdk\current"; Set-Location OmniKey-AI;
 
 ```
 
+To turn it off you can press `Ctrl + C`.
