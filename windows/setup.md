@@ -4,7 +4,7 @@
 To download and run the app on Windows, open the PowerShell terminal and copy-paste this command:
 
 ```powershell
-# OmniKey-AI Windows bootstrap script (HTTPS-only, fixed .env location)
+# OmniKey-AI Windows bootstrap script (HTTPS-only + DOTNET_ROOT fix)
 # Run in Windows Terminal (PowerShell)
 
 $ErrorActionPreference = "Stop"
@@ -38,6 +38,25 @@ try {
   Write-Header "Installing dependencies (git, nodejs, yarn, dotnet-sdk)"
   scoop install git nodejs yarn dotnet-sdk
 
+  # -------------------------------------------------
+  # Set DOTNET_ROOT permanently
+  # -------------------------------------------------
+  Write-Header "Setting DOTNET_ROOT environment variable"
+
+  $dotnetRoot = Join-Path $HOME "scoop\apps\dotnet-sdk\current"
+
+  if (-not (Test-Path $dotnetRoot)) {
+    throw "dotnet-sdk installation not found at expected path: $dotnetRoot"
+  }
+
+  # Set permanently for user
+  setx DOTNET_ROOT "$dotnetRoot" | Out-Null
+
+  # Also set for current session
+  $env:DOTNET_ROOT = $dotnetRoot
+
+  Write-Host "DOTNET_ROOT set to: $dotnetRoot" -ForegroundColor Green
+
   # Refresh PATH
   $env:PATH = [System.Environment]::GetEnvironmentVariable("PATH","User") + ";" +
               [System.Environment]::GetEnvironmentVariable("PATH","Machine")
@@ -57,7 +76,7 @@ try {
     Write-Host "Repo folder '$targetDir' already exists. Skipping clone." -ForegroundColor Yellow
   }
 
-  # Store absolute repo root path
+  # Absolute repo root
   $repoRoot = (Resolve-Path $targetDir).Path
 
   Write-Header "Installing JS dependencies (yarn install)"
@@ -93,6 +112,7 @@ try {
   Write-Host ""
   Write-Host "✅ Done. Repo set up and dotnet build completed." -ForegroundColor Green
   Write-Host "📄 .env created at: $envPath" -ForegroundColor Gray
+  Write-Host "🔁 You may need to restart terminal for permanent DOTNET_ROOT to take effect." -ForegroundColor Yellow
 
 } catch {
   Write-Host ""
@@ -103,20 +123,12 @@ try {
 
 ## Step 2
 
-Restart PowerShell and run these commands one by one.
+Restart PowerShell and run this command.
 
 ```powershell 
 cd OmniKey-AI
 
-yarn dev
+yarn dev:windows
 
-```
-
-Open new tab keep it running if it is started. 
-
-```powershell
-cd OmniKey-AI/windows
-
-dotnet run
 ```
 
