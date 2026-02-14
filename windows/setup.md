@@ -115,7 +115,7 @@ yarn dev
 Open new tab keep it running if it is started. 
 
 ```powershell
-cd OmniKey-AI
+cd OmniKey-AI/windows
 
 dotnet run
 ```
