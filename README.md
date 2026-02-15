@@ -37,7 +37,7 @@ The app sends the selected text to the backend, gets the rewritten result, and r
 - macOS 13 or later.
 - Xcode installed (for the macOS app).
 - Windows 10 or later.
-- .NET 8.0 SDK installed (for the Windows tray app).
+- .NET 10.0 SDK installed (for the Windows tray app).
 - Node.js and Yarn installed (for the backend).
 - An OpenAI API key in `.env`.
 
@@ -86,7 +86,7 @@ The macOS app code is under `macOS/`.
 
 ## windows App Setup
 
-From the repo root on a Windows machine:
+Follow [setup](/windows/SETUP.md) or from the repo root on a Windows machine:
 
 ```bash
 cd windows
